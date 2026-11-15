@@ -2,48 +2,75 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>教育智能体 · 研究展示</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>知序 · 学习空间</title>
+    <link rel="icon" href="data:," />
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
-    <aside class="rail">
-      <a class="brand" href="#overview"
-        ><span>教育智能体<small>研究方法与实验结果</small></span></a
+    <aside class="rail" id="sidebar">
+      <a class="brand" href="#home"
+        ><span class="brand-mark">知</span
+        ><span>知序<small>ZHIXU · LEARNING</small></span></a
       >
-      <p class="rail-label">研究原型</p>
-      <nav aria-label="主导航">
-        <button data-page="overview" class="active">01 <span>系统方法</span></button>
-        <button data-page="demo">02 <span>实际案例</span></button>
-        <button data-page="skills">03 <span>技能进化实验</span></button>
-        <div class="nav-divider">完整记录与运行</div>
-        <button data-page="profiles"><span>学生画像</span></button>
-        <button data-page="questions"><span>练习与审核</span></button>
-        <button data-page="tasks"><span>任务工作台</span></button>
-      </nav>
+      <div class="course-switch">
+        <span class="course-icon">⌘</span>
+        <div>
+          <strong>Java 程序设计</strong><small>基于已有作答的学习空间</small>
+        </div>
+      </div>
+      <p class="rail-label" id="nav-label">学习与探索</p>
+      <nav id="navigation" aria-label="主导航"></nav>
       <div class="rail-bottom">
-        <span class="dot"></span> 本地工作空间
-        <p>Java 原型 · 人工复核<br />方法说明与已保存结果。</p>
+        <div class="gentle-note">
+          从每一份证据出发<small>理解表现，再安排下一步。</small>
+        </div>
+        <div class="mode-switch" role="group" aria-label="界面模式">
+          <button id="learner-mode" type="button">学习空间</button
+          ><button id="admin-mode" type="button">管理后台</button>
+        </div>
+        <p class="local-caption">
+          <span class="dot"></span> 本地连接 · 免登录工作空间
+        </p>
       </div>
     </aside>
     <main>
       <header>
-        <span id="breadcrumb">工作空间 / 研究概览</span>
+        <div class="header-left">
+          <button
+            type="button"
+            id="menu-toggle"
+            aria-label="展开导航"
+            aria-expanded="false"
+          >
+            ☰</button
+          ><span id="breadcrumb">我的空间 / 学习空间</span>
+        </div>
         <div class="header-actions">
-          <label for="student">学生</label
-          ><select id="student">
-            <option value="">全部学生</option></select
-          ><button id="refresh" class="quiet">刷新数据 ↻</button>
+          <label for="student">当前学生</label
+          ><select id="student" aria-label="当前学生"></select
+          ><button id="refresh" class="quiet" type="button">刷新数据 ↻</button>
         </div>
       </header>
+      <div class="context-bar">
+        <span><i class="dot"></i> 已连接本地保存结果</span>
+        <div>
+          <label for="profile-select">参考画像</label
+          ><select id="profile-select" aria-label="参考画像"></select>
+        </div>
+      </div>
       <div id="notice" role="status" hidden></div>
-      <div id="content" aria-live="polite"><p class="empty">正在读取本地任务记录…</p></div>
-      <footer>原始作答 / 工具观测 / 模型推断，分别记录。未观察不等于不会。</footer>
+      <div id="content" aria-live="polite">
+        <p class="empty">正在读取学生与学习记录…</p>
+      </div>
+      <footer>
+        知序 · Java 学习原型<span>本地工作空间</span>
+      </footer>
     </main>
     <dialog id="detail">
       <div class="dialog-top">
-        <h2 id="detail-title">证据详情</h2>
-        <button id="close-detail" class="quiet">关闭 ×</button>
+        <h2 id="detail-title">查看详情</h2>
+        <button id="close-detail" class="quiet" type="button">关闭 ×</button>
       </div>
       <div id="detail-body"></div>
     </dialog>

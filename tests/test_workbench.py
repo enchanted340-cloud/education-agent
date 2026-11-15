@@ -5,6 +5,7 @@ import time
 import unittest
 import http.client
 import sys
+from unittest.mock import patch
 from pathlib import Path
 from webapp.service import WorkbenchService, run_command
 from webapp.server import make_server
@@ -103,6 +104,28 @@ class WorkbenchTests(unittest.TestCase):
         self.assertEqual(data['profiles'][0]['student_id'],'s1')
         self.assertIn('csrf_token',data)
 
+    def test_index_snapshot_reused_and_changed_files_revalidated(self):
+        store=self.service._artifacts
+        self.service.bootstrap()
+        with patch.object(store,'inventory',wraps=store.inventory) as scan:
+            self.assertEqual(store.artifact('runs/x/profile.json')['student_id'],'s1')
+            store.artifact('runs/x/profile.json')
+            self.assertEqual(scan.call_count,0)
+            (self.root/'runs/x/profile.json').write_text('{"student_id":"changed"}')
+            self.assertEqual(store.artifact('runs/x/profile.json')['student_id'],'changed')
+            self.assertEqual(scan.call_count,1)
+        (self.root/'runs/x/profile.json').unlink()
+        with self.assertRaises((ValueError,FileNotFoundError)):store.artifact('runs/x/profile.json')
+        new=self.root/'runs/new/profile.json';new.parent.mkdir();new.write_text('{"student_id":"s2"}')
+        self.assertEqual(self.service.bootstrap()['profiles'][0]['student_id'],'s2')
+
+    def test_cached_record_cannot_bypass_changed_shape_validation(self):
+        p=self.root/'runs/x/records.json'
+        p.write_text('[{"student_id":"s1","question":"q","program":"p"}]')
+        self.service.bootstrap();self.service.artifact('runs/x/records.json')
+        p.write_text('{"private":"not an evidence list"}')
+        with self.assertRaises(ValueError):self.service.artifact('runs/x/records.json')
+
     def test_command_modes_and_approval_are_explicit(self):
         cases = (
             ('profile', 'execute', '--execute'),
@@ -175,7 +198,7 @@ class WorkbenchTests(unittest.TestCase):
         self.addCleanup(server.shutdown)
         conn = http.client.HTTPConnection('127.0.0.1', server.server_port)
         self.addCleanup(conn.close)
-        for path in ('/router.js', '/pages/demo.js', '/data/skill-results.js'):
+        for path in ('/router.js', '/learning-data.js', '/pages/home.js', '/pages/library.js'):
             with self.subTest(path=path):
                 conn.request('GET', path)
                 response = conn.getresponse()
@@ -183,7 +206,9 @@ class WorkbenchTests(unittest.TestCase):
                 self.assertEqual(response.status, 200)
                 self.assertEqual(response.getheader('Content-Type'), 'text/javascript; charset=utf-8')
                 self.assertIn(b'export ', body)
-        for path in ('/package.json', '/pages/../../service.py', '/.env'):
+        for path in ('/package.json', '/pages/../../service.py', '/.env',
+                     '/pages/demo.js', '/pages/overview.js', '/pages/skills.js',
+                     '/data/skill-results.js', '/demo-route.js'):
             with self.subTest(path=path):
                 conn.request('GET', path)
                 response = conn.getresponse()

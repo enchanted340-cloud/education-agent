@@ -10,10 +10,9 @@ from .service import WorkbenchService
 # Explicit assets only: module imports do not expose the repository as a file server.
 STATIC_FILES = (
     'index.html', 'style.css', 'app.js', 'router.js', 'state.js', 'labels.js',
-    'api.js', 'ui.js', 'demo-route.js', 'job-poller.js',
-    'pages/overview.js', 'pages/demo.js', 'pages/skills.js',
+    'api.js', 'ui.js', 'learning-data.js', 'job-poller.js',
+    'pages/home.js', 'pages/library.js',
     'pages/profiles.js', 'pages/questions.js', 'pages/tasks.js',
-    'data/skill-results.js',
 )
 STATIC_ROUTES = {'/' + name: name for name in STATIC_FILES}
 STATIC_ROUTES['/'] = 'index.html'
