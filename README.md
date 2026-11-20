@@ -54,7 +54,7 @@ python serve_workbench.py
 | `app.js`、`router.js` | 注册页面、切换栏目、刷新数据与处理过期页面请求 |
 | `state.js`、`api.js` | 会话状态、学生筛选、HTTP 请求及结果缓存 |
 | `ui.js`、`labels.js` | 公共展示组件、中文标签及状态名称 |
-| `pages/` | 学习空间、推荐、画像证据、候选题与审核、知识关系、笔记及管理任务 |
+| `pages/` | 学习空间、推荐、画像证据、候选题与审核、知识关系、笔记、管理任务及实验评测 |
 | `learning-data.js` | 按学生读取结果，过滤无效画像与测试作答，保留实际题目版本 |
 | `job-poller.js` | 可中止的任务轮询 |
 | `index.html`、`style.css` | 页面框架、现有样式与响应式布局 |
@@ -67,7 +67,9 @@ python serve_workbench.py
 
 目前是小规模、人工复核的原型：没有真实学生使用新题的学习效果证据；模型仍可能误归因；生成题保持`needs_review`及`ready_for_student=false`，不自动交付。新题接收接口已验证，历史回放不等于新题真实反馈。
 
-本地前端已替换为“知序”学习空间与管理后台，直接读取已有结果。旧系统方法、固定案例、skills 展示页及专属展示数据已移除，原始实验材料保留。课程资料、智能助教尚未接入，页面显示相应空状态。管理后台导航聚焦实际业务，移除了教学质量、研究验证和系统配置占位栏目，旧链接保留空状态兼容。学习空间与管理后台是本机视图切换，不是账号角色。
+本地前端使用“知序”学习空间与管理后台，直接读取已有结果。课程资料、智能助教尚未接入，页面显示相应空状态。学习空间与管理后台是本机视图切换。
+
+在管理后台点“实验评测”，或打开 [本机实验评测页](http://127.0.0.1:8765/#experiments)。页面读取仓库同级 `experiments/stage-d-20261118/execution/` 中的评分和题稿归档，展示成对首稿与终稿、四个可展开的案例及技能对照。仅克隆代码时，页面会提示缺少本地归档。
 
 ## 数据与配置
 
@@ -217,6 +219,25 @@ python verify_submission.py --submission-run runs/某接收任务 --cases cases.
 本地实验区有`artifacts/usage-history/java_u520480375.json`示例（不随仓库分发）；新使用者可按上面的结构创建自己的清单。接收真实作答后列入submission_runs；verification_runs只能放匹配提交的学生验证任务。重复路径去重，错学生、错版本、篡改及fixture拒绝。
 
 模型读取相关公开题面、收到的作答记录、已有模型观察及精简运行结果；不据此自动更新画像。生成不等于已交付，未收到作答不等于未做。推荐到出题继承同一快照，不另换清单；未提供清单时预览会明确显示。
+
+## 离线评测
+
+`evaluate_saved.py` 读取保存的案例和核对记录。从 `education-agent` 目录运行以下命令。报告目录须为新目录。
+
+```powershell
+python -B evaluate_saved.py prepare --cases ../outputs/evaluation-stage-b-20261118/cases.json --case G02 --view G02-review-v2 --output G02-review-packet.json
+python -B evaluate_saved.py report --cases ../outputs/evaluation-stage-b-20261118/cases.json --references ../outputs/evaluation-stage-b-20261118/references.json --findings ../outputs/evaluation-stage-c-20261118/G02-findings.json --source-root .. --output-dir G02-report
+```
+
+`prepare` 输出所选视图、可阅材料和案例包指纹。`report` 校验文件出处、题目版本及发现引用，并生成 `evaluation.json` 和 `evaluation.md`。对其他案例可参考 G02 示例填写 `set_id`、`case_id`、`view_ids`、`assessment_source` 和 `findings`。每条发现填写 `finding_id`、`view_id`、`material_id`、材料内的 JSON Pointer `location`、`verdict` 和 `basis`。可照抄任务包的 `cases_sha256` 以绑定所评案例版本。修订及审核对照可选，用发现 ID 引用前后证据。
+
+语义判断来自填写的核对记录。报告和评阅包可能含本地学生材料或其来源，应留在本地研究目录。
+
+阶段 D 的成对评分使用已保存的盲评结论和样例复算记录。从本仓库目录执行以下命令，标准输出为 JSON，含逐题分数、可比分母、百分点差和相对变化。主分按已核项有无确定缺陷计 0 或 100，样例答案与覆盖情况各计一个诊断分。
+
+```powershell
+python -B evaluate_saved.py score --execution ../experiments/stage-d-20261118/execution
+```
 
 ## 恢复与验证
 

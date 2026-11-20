@@ -3,6 +3,7 @@ import { home, plan, admin } from "./pages/home.js";
 import { profiles, review } from "./pages/profiles.js";
 import { questions, practice, submissions } from "./pages/questions.js";
 import { tasks } from "./pages/tasks.js";
+import { evaluation } from "./pages/evaluation.js";
 import { graph, notes, placeholder } from "./pages/library.js";
 start({
   home,
@@ -22,6 +23,6 @@ start({
   chat: placeholder,
   twin: profiles,
   quality: placeholder,
-  experiments: placeholder,
+  experiments: evaluation,
   settings: placeholder,
 });

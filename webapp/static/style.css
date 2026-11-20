@@ -2534,3 +2534,316 @@ dialog.profile-drawer::backdrop {
     width: 100%;
   }
 }
+
+.evaluation-page {
+  --evaluation-muted: #566887;
+}
+.evaluation-page :is(h2, h3, h4, p, dl, dd) {
+  margin: 0;
+}
+.evaluation-page .page-heading p {
+  margin-top: 8px;
+}
+.evaluation-muted {
+  color: var(--evaluation-muted);
+  line-height: 1.65;
+}
+.evaluation-overview {
+  padding: clamp(18px, 4vw, 34px);
+  border: 1px solid #dce5ff;
+  border-radius: var(--radius);
+  background: #f1f5ff;
+}
+.evaluation-overview-heading {
+  display: flex;
+  gap: 14px 24px;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+.evaluation-overview-heading h2 {
+  margin-bottom: 6px;
+}
+.evaluation-difference {
+  display: grid;
+  gap: 3px;
+  padding: 10px 14px;
+  border: 1px solid #cfdbff;
+  border-radius: 12px;
+  background: white;
+  color: var(--blue-dark);
+}
+.evaluation-difference strong {
+  font-size: clamp(18px, 2.5vw, 27px);
+  font-variant-numeric: tabular-nums;
+}
+.evaluation-comparison,
+.evaluation-diagnostics,
+.evaluation-skills,
+.evaluation-versions {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+.evaluation-comparison {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.evaluation-bar,
+.evaluation-diagnostic,
+.evaluation-skill {
+  padding: 15px 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+}
+.evaluation-bar {
+  --evaluation-fill: #6f84bf;
+}
+.evaluation-bar.final {
+  --evaluation-fill: var(--blue);
+}
+.evaluation-bar-heading,
+.evaluation-skill-round-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--evaluation-muted);
+  font-variant-numeric: tabular-nums;
+}
+.evaluation-bar-heading h3,
+.evaluation-skill-round-heading h4 {
+  color: var(--ink);
+  font-size: inherit;
+}
+.evaluation-ratio {
+  margin: 2px 0 9px;
+  color: var(--ink);
+  font-size: clamp(25px, 4vw, 39px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.evaluation-meter {
+  display: block;
+  width: 100%;
+  height: 9px;
+  appearance: none;
+  background: #e7edf9;
+  border: none;
+  border-radius: 20px;
+}
+.evaluation-meter::-webkit-meter-bar {
+  background: #e7edf9;
+  border: none;
+  border-radius: 20px;
+}
+.evaluation-meter::-webkit-meter-optimum-value {
+  background: var(--evaluation-fill);
+  border-radius: 20px;
+}
+.evaluation-meter::-moz-meter-bar {
+  background: var(--evaluation-fill);
+  border-radius: 20px;
+}
+.evaluation-diagnostics {
+  margin-top: 12px;
+}
+.evaluation-diagnostic {
+  display: grid;
+  gap: 5px;
+}
+.evaluation-diagnostic h3 {
+  font-size: 13px;
+  font-weight: 500;
+}
+.evaluation-figures {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.evaluation-page .evaluation-note {
+  margin-top: 14px;
+  font-size: 12px;
+}
+.evaluation-section {
+  margin-top: 30px;
+}
+.evaluation-section > h2 {
+  margin-bottom: 11px;
+}
+.evaluation-section > p {
+  margin-bottom: 12px;
+}
+.evaluation-case {
+  margin: 0 0 10px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.evaluation-case > summary {
+  display: grid;
+  align-items: center;
+  grid-template-columns: max-content minmax(0, 1fr) 14px;
+  gap: 14px;
+  padding: 12px 18px;
+  color: var(--ink);
+  list-style: none;
+  border-radius: inherit;
+}
+.evaluation-case > summary::-webkit-details-marker {
+  display: none;
+}
+.evaluation-case > summary::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--blue-dark);
+  border-bottom: 2px solid var(--blue-dark);
+  transform: rotate(45deg);
+}
+.evaluation-case[open] > summary,
+.evaluation-case > summary:hover {
+  background: #f1f5ff;
+}
+.evaluation-case[open] > summary {
+  margin-bottom: 0;
+  border-radius: 11px 11px 0 0;
+}
+.evaluation-case[open] > summary::after {
+  transform: rotate(225deg);
+}
+.evaluation-case-id {
+  display: inline-block;
+  padding: 4px 7px;
+  border-radius: 5px;
+  color: var(--blue-dark);
+  background: var(--soft);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.evaluation-case-title {
+  display: grid;
+  gap: 3px;
+}
+.evaluation-case-title strong {
+  font-size: 14px;
+}
+.evaluation-case-body {
+  padding: 15px 18px 18px;
+}
+.evaluation-request {
+  padding: 13px 15px;
+  margin-bottom: 12px;
+  border-left: 3px solid #a7baed;
+  background: #f6f8fd;
+}
+.evaluation-page pre {
+  margin: 5px 0 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.evaluation-version {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 13px;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.evaluation-version-heading,
+.evaluation-skill-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 7px 12px;
+}
+.evaluation-status {
+  color: var(--evaluation-muted);
+  font-size: 12px;
+}
+.evaluation-evidence {
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+}
+.evaluation-evidence h4 {
+  margin-bottom: 6px;
+}
+.evaluation-text-label {
+  color: var(--evaluation-muted);
+  font-size: 12px;
+}
+.evaluation-sample {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+.evaluation-sample > div {
+  min-width: 0;
+  padding: 8px;
+  background: #f3f6fc;
+  border-radius: 7px;
+}
+.evaluation-sample pre {
+  font-family: Consolas, "Microsoft YaHei", monospace;
+}
+.evaluation-evidence .sample-explanation {
+  margin-top: 8px;
+}
+.evaluation-findings {
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.65;
+}
+.evaluation-scores {
+  color: var(--blue-dark);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.evaluation-skill-round {
+  margin-top: 11px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.evaluation-page .evaluation-skill-values {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.evaluation-skill-values dt {
+  color: var(--evaluation-muted);
+  font-size: 12px;
+}
+.evaluation-page .evaluation-draft-outcomes {
+  margin-top: 7px;
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .evaluation-comparison {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .evaluation-case > summary,
+  .evaluation-case-body {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+  .evaluation-case > summary {
+    gap: 8px;
+  }
+}
+@media (max-width: 400px) {
+  .evaluation-sample {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

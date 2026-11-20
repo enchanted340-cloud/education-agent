@@ -17,7 +17,7 @@ export const names = {
   generation: "创建任务",
   twin: "学生画像",
   quality: "教学质量",
-  experiments: "研究验证",
+  experiments: "实验评测",
   settings: "系统配置",
 };
 

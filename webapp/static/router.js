@@ -22,6 +22,7 @@ const admin = [
   "recommendations",
   "questions",
   "submissions",
+  "experiments",
   "generation",
   "tasks",
 ];
@@ -45,6 +46,7 @@ function drawNav() {
   }
 }
 export async function load() {
+  if (state.page === "experiments") return render();
   const ticket = ++loadVersion;
   ++state.epoch;
   $("#refresh").disabled = true;
@@ -61,15 +63,17 @@ export async function load() {
     );
     if (!ids.length) $("#student").append(new Option("暂无学生", ""));
     $("#student").value = state.student;
-    await render();
+    if (state.page !== "experiments") await render();
   } catch (error) {
     if (ticket === loadVersion) {
       state.data = null;
       state.model = null;
-      $("#content").replaceChildren(
-        el("p", "empty", "本地数据读取失败，请检查服务后刷新。"),
-      );
-      notice(error);
+      if (state.page !== "experiments") {
+        $("#content").replaceChildren(
+          el("p", "empty", "本地数据读取失败，请检查服务后刷新。"),
+        );
+        notice(error);
+      }
     }
   } finally {
     if (ticket === loadVersion) $("#refresh").disabled = false;
@@ -84,10 +88,29 @@ export async function render() {
     " / " +
     names[state.page];
   document.title = "知序 · " + names[state.page];
+  const isEvaluation = state.page === "experiments";
+  $("#student-label").hidden = isEvaluation;
+  $("#student").hidden = isEvaluation;
+  const select = $("#profile-select");
+  select.parentElement.hidden = ![
+    "home",
+    "profiles",
+    "review",
+    "graph",
+    "twin",
+    "generation",
+    "admin",
+  ].includes(state.page);
   const content = $("#content");
-  content.replaceChildren(el("p", "loading", "正在读取当前学生的记录…"));
-  if (!state.data) return;
+  content.replaceChildren(
+    el("p", "loading", isEvaluation ? "正在读取实验评测…" : "正在读取当前学生的记录…"),
+  );
   try {
+    if (isEvaluation) {
+      await renderers.experiments(content, epoch);
+      return;
+    }
+    if (!state.data) return;
     const model = await loadStudent(
       state.data,
       state.student,
@@ -96,16 +119,6 @@ export async function render() {
     if (epoch !== state.epoch) return;
     state.model = model;
     state.selectedProfile = model.profileItem?.path || "";
-    const select = $("#profile-select");
-    select.parentElement.hidden = ![
-      "home",
-      "profiles",
-      "review",
-      "graph",
-      "twin",
-      "generation",
-      "admin",
-    ].includes(state.page);
     select.replaceChildren(
       ...model.profiles.map(
         (x) =>
@@ -132,7 +145,11 @@ export async function render() {
   } catch (error) {
     if (epoch === state.epoch) {
       content.replaceChildren(
-        el("p", "empty", "读取结果时遇到问题，请刷新重试。"),
+        el(
+          "p",
+          "empty",
+          isEvaluation ? "实验评测读取失败，请刷新重试。" : "读取结果时遇到问题，请刷新重试。",
+        ),
       );
       notice(error);
     }
@@ -142,13 +159,15 @@ export function navigate(page) {
   if (!renderers[page]) page = "home";
   if ($("#detail").open) $("#detail").close();
   state.page = page;
-  state.mode = [...admin, "quality", "experiments", "settings"].includes(page)
+  state.mode = [...admin, "quality", "settings"].includes(page)
     ? "admin"
     : "learner";
   if (location.hash !== "#" + page) history.replaceState(null, "", "#" + page);
   document.body.classList.remove("nav-open");
   $("#menu-toggle").setAttribute("aria-expanded", "false");
-  return render();
+  const rendered = render();
+  if (page !== "experiments" && !state.data && !$("#refresh").disabled) return load();
+  return rendered;
 }
 export function startTask(operation, fields = {}) {
   state.operation = operation;
@@ -180,6 +199,6 @@ export function start(pages) {
   const hash = location.hash.slice(1);
   state.page = pages[hash] ? hash : "home";
   state.mode = admin.includes(state.page) ? "admin" : "learner";
-  drawNav();
-  load();
+  if (state.page !== "experiments") drawNav();
+  return load();
 }

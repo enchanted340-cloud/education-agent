@@ -124,6 +124,7 @@ export function icon(name) {
     tasks: "M6 3h12v18H6ZM9 7h6m-6 5h6m-6 5h4",
     questions: "M4 3h16v18H4Zm4 5h8m-8 5h8m-8 4h5",
     admin: "M3 3h7v7H3Zm11 0h7v7h-7ZM3 14h7v7H3Zm11 0h7v7h-7Z",
+    experiments: "M4 3v17h17M8 16v-4m5 4V8m5 8V5",
     generation: "M12 2v20M2 12h20M5 5l14 14M19 5 5 19",
   };
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
