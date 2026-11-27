@@ -1,9 +1,28 @@
-// Register the existing pages and start the local workbench.
-import { start } from './router.js';
-import { overview } from './pages/overview.js';
-import { savedDemo } from './pages/demo.js';
-import { skillResults } from './pages/skills.js';
-import { profiles } from './pages/profiles.js';
-import { questions } from './pages/questions.js';
-import { tasks } from './pages/tasks.js';
-start({ overview, demo: savedDemo, skills: skillResults, profiles, questions, tasks });
+import { start } from "./router.js";
+import { home, plan, admin } from "./pages/home.js";
+import { profiles, review } from "./pages/profiles.js";
+import { questions, practice, submissions } from "./pages/questions.js";
+import { tasks } from "./pages/tasks.js";
+import { evaluation } from "./pages/evaluation.js";
+import { graph, notes, placeholder } from "./pages/library.js";
+start({
+  home,
+  plan,
+  recommendations: plan,
+  submissions,
+  admin,
+  profiles,
+  review,
+  questions,
+  practice,
+  tasks,
+  generation: tasks,
+  graph,
+  notes,
+  reading: placeholder,
+  chat: placeholder,
+  twin: profiles,
+  quality: placeholder,
+  experiments: evaluation,
+  settings: placeholder,
+});

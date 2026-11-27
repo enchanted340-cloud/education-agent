@@ -18,6 +18,12 @@ class ArtifactStore:
 
     def __init__(self, root):
         self.root = Path(root).resolve()
+        self._snapshot = None
+
+    @staticmethod
+    def _signature(path):
+        info = path.stat()
+        return (info.st_mtime_ns, info.st_ctime_ns, info.st_size, info.st_ino)
 
     def safe_path(self, value):
         """Resolve a public repository-relative path, including symlink containment."""
@@ -39,6 +45,7 @@ class ArtifactStore:
         )}
         allowed = {}
         loaded = {}
+        signatures = {}
         candidates = [self.root / 'config/java-basics.json']
         for folder in ('runs', 'artifacts'):
             base = self.root / folder
@@ -56,7 +63,8 @@ class ArtifactStore:
             if not kind and rel != 'config/java-basics.json':
                 continue
             try:
-                if path.stat().st_size > 8_000_000:
+                signature = self._signature(path)
+                if signature[2] > 8_000_000:
                     continue
                 data = json.loads(path.read_text(encoding='utf-8-sig'))
             except (OSError, ValueError):
@@ -75,6 +83,7 @@ class ArtifactStore:
                 continue
             allowed[rel] = path
             loaded[rel] = data
+            signatures[rel] = signature
             if kind:
                 info = data if isinstance(data, dict) else {}
                 groups[kind].append(dict(
@@ -136,14 +145,22 @@ class ArtifactStore:
             for item in items:
                 # This means a file-level student link, not authenticated identity.
                 item['identity_verified'] = bool(item['student_id'])
+        # Publish one complete snapshot; concurrent reads never see partial indexing.
+        self._snapshot = (allowed, loaded, signatures)
         return groups, allowed
 
     def artifact(self, value):
-        self.safe_path(value)
-        _, allowed = self.inventory()
+        path = self.safe_path(value)
+        if self._snapshot is None:
+            self.inventory()
+        allowed, loaded, signatures = self._snapshot
+        if value in allowed and self._signature(path) != signatures[value]:
+            # Changed records go through the original shape/size/allowlist checks.
+            self.inventory()
+            allowed, loaded, signatures = self._snapshot
         if value not in allowed:
             raise ValueError('Artifact is not in the public result allowlist')
-        return json.loads(allowed[value].read_text(encoding='utf-8-sig'))
+        return loaded[value]
 
     def save_submission_draft(self, answer):
         """Save an input draft; submission acceptance and profile updates are separate."""

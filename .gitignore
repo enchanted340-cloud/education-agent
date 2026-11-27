@@ -10,7 +10,6 @@ data/
 # Fixed presentation source is code; raw datasets remain excluded.
 !webapp/static/data/
 webapp/static/data/*
-!webapp/static/data/skill-results.js
 datasets/
 runs/
 results/

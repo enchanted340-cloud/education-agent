@@ -1,79 +1,204 @@
-import { state } from './state.js';
-import { names } from './labels.js';
-import { api } from './api.js';
-import { $, el, button, notice } from './ui.js';
-let renderers;
-
+import { state } from "./state.js";
+import { names } from "./labels.js";
+import { api } from "./api.js";
+import { loadStudent, studentIds } from "./learning-data.js";
+import { $, el, button, notice, icon } from "./ui.js";
+let renderers,
+  loadVersion = 0;
+const learner = [
+  "home",
+  "plan",
+  "reading",
+  "chat",
+  "practice",
+  "graph",
+  "profiles",
+  "review",
+  "notes",
+];
+const admin = [
+  "admin",
+  "twin",
+  "recommendations",
+  "questions",
+  "submissions",
+  "experiments",
+  "generation",
+  "tasks",
+];
+function drawNav() {
+  $("#navigation").replaceChildren();
+  for (const id of state.mode === "admin" ? admin : learner) {
+    const b = button("", () => navigate(id), state.page === id ? "active" : "");
+    b.dataset.page = id;
+    b.append(icon(id), el("span", "", names[id]));
+    if (state.page === id) b.setAttribute("aria-current", "page");
+    $("#navigation").append(b);
+  }
+  $("#nav-label").textContent =
+    state.mode === "admin" ? "管理与运行" : "学习与探索";
+  for (const mode of ["learner", "admin"]) {
+    $("#" + mode + "-mode").classList.toggle("active", state.mode === mode);
+    $("#" + mode + "-mode").setAttribute(
+      "aria-pressed",
+      String(state.mode === mode),
+    );
+  }
+}
 export async function load() {
-  const data = await api('/api/bootstrap');
-  state.data = data;
-  state.artifacts.clear();
-  const ids = [
-    ...new Set(
-      [...data.profiles, ...data.generations, ...data.recommendations]
-        .map((v) => v.student_id)
-        .filter(Boolean),
-    ),
-  ].sort();
-  const select = $('#student');
-  select.replaceChildren(new Option('全部学生', ''), ...ids.map((x) => new Option(x, x)));
-  if (ids.includes(state.student)) select.value = state.student;
-  else state.student = '';
-  await render();
+  if (state.page === "experiments") return render();
+  const ticket = ++loadVersion;
+  ++state.epoch;
+  $("#refresh").disabled = true;
+  if ($("#detail").open) $("#detail").close();
+  try {
+    const data = await api("/api/bootstrap");
+    if (ticket !== loadVersion) return;
+    state.data = data;
+    state.artifacts.clear();
+    const ids = studentIds(data);
+    if (!ids.includes(state.student)) state.student = ids[0] || "";
+    $("#student").replaceChildren(
+      ...ids.map((x) => new Option(x.replace("java_", ""), x)),
+    );
+    if (!ids.length) $("#student").append(new Option("暂无学生", ""));
+    $("#student").value = state.student;
+    if (state.page !== "experiments") await render();
+  } catch (error) {
+    if (ticket === loadVersion) {
+      state.data = null;
+      state.model = null;
+      if (state.page !== "experiments") {
+        $("#content").replaceChildren(
+          el("p", "empty", "本地数据读取失败，请检查服务后刷新。"),
+        );
+        notice(error);
+      }
+    }
+  } finally {
+    if (ticket === loadVersion) $("#refresh").disabled = false;
+  }
 }
 export async function render() {
   const epoch = ++state.epoch;
-  $('#notice').hidden = true;
-  $('#breadcrumb').textContent = '工作空间 / ' + names[state.page];
-  document
-    .querySelectorAll('nav button')
-    .forEach((b) => b.classList.toggle('active', b.dataset.page === state.page));
-  const content = $('#content');
-  content.replaceChildren();
-  if (!state.data) return;
+  $("#notice").hidden = true;
+  drawNav();
+  $("#breadcrumb").textContent =
+    (state.mode === "admin" ? "管理后台" : "我的空间") +
+    " / " +
+    names[state.page];
+  document.title = "知序 · " + names[state.page];
+  const isEvaluation = state.page === "experiments";
+  $("#student-label").hidden = isEvaluation;
+  $("#student").hidden = isEvaluation;
+  const select = $("#profile-select");
+  select.parentElement.hidden = ![
+    "home",
+    "profiles",
+    "review",
+    "graph",
+    "twin",
+    "generation",
+    "admin",
+  ].includes(state.page);
+  const content = $("#content");
+  content.replaceChildren(
+    el("p", "loading", isEvaluation ? "正在读取实验评测…" : "正在读取当前学生的记录…"),
+  );
   try {
-    $('#student').disabled = ['demo', 'overview', 'skills'].includes(state.page);
-    $('.header-actions label').hidden = $('#student').disabled;
-    $('#student').hidden = $('#student').disabled;
+    if (isEvaluation) {
+      await renderers.experiments(content, epoch);
+      return;
+    }
+    if (!state.data) return;
+    const model = await loadStudent(
+      state.data,
+      state.student,
+      state.profileSelections.get(state.student) || "",
+    );
+    if (epoch !== state.epoch) return;
+    state.model = model;
+    state.selectedProfile = model.profileItem?.path || "";
+    select.replaceChildren(
+      ...model.profiles.map(
+        (x) =>
+          new Option(
+            `${x.label} · ${x.data.evidence?.length || 0} 份证据`,
+            x.path,
+          ),
+      ),
+    );
+    if (!model.profiles.length) select.append(new Option("暂无可用画像", ""));
+    select.value = state.selectedProfile;
+    select.disabled = !model.profiles.length;
+    if (model.issues.length)
+      notice(
+        new Error(
+          "部分记录无法读取，其他可用结果正常展示：" +
+            model.issues
+              .map((x) => (typeof x === "string" ? x : x.message))
+              .join("；"),
+        ),
+      );
+    content.replaceChildren();
     await renderers[state.page](content, epoch);
-  } catch (e) {
-    if (epoch === state.epoch) notice(e);
+  } catch (error) {
+    if (epoch === state.epoch) {
+      content.replaceChildren(
+        el(
+          "p",
+          "empty",
+          isEvaluation ? "实验评测读取失败，请刷新重试。" : "读取结果时遇到问题，请刷新重试。",
+        ),
+      );
+      notice(error);
+    }
   }
 }
 export function navigate(page) {
-  if ($('#detail').open) $('#detail').close();
+  if (!renderers[page]) page = "home";
+  if ($("#detail").open) $("#detail").close();
   state.page = page;
-  location.hash = page;
-  return render();
+  state.mode = [...admin, "quality", "settings"].includes(page)
+    ? "admin"
+    : "learner";
+  if (location.hash !== "#" + page) history.replaceState(null, "", "#" + page);
+  document.body.classList.remove("nav-open");
+  $("#menu-toggle").setAttribute("aria-expanded", "false");
+  const rendered = render();
+  if (page !== "experiments" && !state.data && !$("#refresh").disabled) return load();
+  return rendered;
 }
-
-export function presentationPath(active) {
-  const nav = el('nav', 'presentation-path');
-  nav.setAttribute('aria-label', '讲解顺序');
-  [
-    ['overview', '01', '系统方法'],
-    ['demo', '02', '实际案例'],
-    ['skills', '03', '技能进化实验'],
-  ].forEach(([page, no, title]) => {
-    const b = button(`${no}  ${title}`, () => navigate(page), page === active ? 'selected' : '');
-    if (page === active) b.setAttribute('aria-current', 'page');
-    nav.append(b);
-  });
-  return nav;
+export function startTask(operation, fields = {}) {
+  state.operation = operation;
+  state.taskFields = fields;
+  return navigate("generation");
 }
 export function start(pages) {
   renderers = pages;
-  document
-    .querySelectorAll('nav button')
-    .forEach((b) => b.addEventListener('click', () => navigate(b.dataset.page)));
-  $('#student').addEventListener('change', () => {
-    state.student = $('#student').value;
-    if ($('#detail').open) $('#detail').close();
-    state.preview = null;
+  $("#student").addEventListener("change", () => {
+    state.student = $("#student").value;
+    state.taskFields = {};
+    state.selectedGeneration = "";
+    if ($("#detail").open) $("#detail").close();
     render();
   });
-  $('#refresh').addEventListener('click', () => load().catch(notice));
-  $('#close-detail').addEventListener('click', () => $('#detail').close());
-  if (names[location.hash.slice(1)]) state.page = location.hash.slice(1);
-  load().catch(notice);
+  $("#profile-select").addEventListener("change", () => {
+    state.profileSelections.set(state.student, $("#profile-select").value);
+    render();
+  });
+  $("#refresh").addEventListener("click", load);
+  $("#close-detail").addEventListener("click", () => $("#detail").close());
+  $("#learner-mode").addEventListener("click", () => navigate("home"));
+  $("#admin-mode").addEventListener("click", () => navigate("admin"));
+  $("#menu-toggle").addEventListener("click", () => {
+    const open = document.body.classList.toggle("nav-open");
+    $("#menu-toggle").setAttribute("aria-expanded", String(open));
+  });
+  window.addEventListener("hashchange", () => navigate(location.hash.slice(1)));
+  const hash = location.hash.slice(1);
+  state.page = pages[hash] ? hash : "home";
+  state.mode = admin.includes(state.page) ? "admin" : "learner";
+  if (state.page !== "experiments") drawNav();
+  return load();
 }

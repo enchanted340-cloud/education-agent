@@ -5,15 +5,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
+from .evaluation import EvaluationReadError, read_evaluation
 from .service import WorkbenchService
 
 # Explicit assets only: module imports do not expose the repository as a file server.
 STATIC_FILES = (
     'index.html', 'style.css', 'app.js', 'router.js', 'state.js', 'labels.js',
-    'api.js', 'ui.js', 'demo-route.js', 'job-poller.js',
-    'pages/overview.js', 'pages/demo.js', 'pages/skills.js',
-    'pages/profiles.js', 'pages/questions.js', 'pages/tasks.js',
-    'data/skill-results.js',
+    'api.js', 'ui.js', 'learning-data.js', 'job-poller.js',
+    'pages/home.js', 'pages/library.js',
+    'pages/profiles.js', 'pages/questions.js', 'pages/tasks.js', 'pages/evaluation.js',
 )
 STATIC_ROUTES = {'/' + name: name for name in STATIC_FILES}
 STATIC_ROUTES['/'] = 'index.html'
@@ -67,6 +67,8 @@ def make_server(root, port=8765, service=None):
             try:
                 if url.path == '/api/bootstrap':
                     return self.send(200, service.bootstrap())
+                if url.path == '/api/evaluation':
+                    return self.send(200, read_evaluation(root))
                 if url.path == '/api/artifact':
                     return self.send(200, {
                         'artifact': service.artifact(parse_qs(url.query).get('path', [''])[0]),
@@ -84,6 +86,8 @@ def make_server(root, port=8765, service=None):
                     }[path.suffix]
                     return self.send(200, path.read_bytes(), mime)
                 self.send(404, {'error': 'Not found'})
+            except EvaluationReadError:
+                self.send(500, {'error': '实验归档读取失败'})
             except ValueError as exc:
                 self.send(400, {'error': str(exc)})
             except (KeyError, FileNotFoundError):
